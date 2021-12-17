@@ -64,6 +64,8 @@ objects:
   - landlords_attorneys: ALPeopleList
   - landlords: ALPeopleList.using(there_are_any=True)
   - court: MACourt
+  - housing_courts: MACourtList.using(courts=['housing_courts'])
+  - transfer_courts: MACourtList.using(courts=['bmc','district_courts'])
   - macourts: MACourtList.using(courts=True)
 ---
 sections:
@@ -126,17 +128,19 @@ continue button field: TransferNotice_intro
 question: |
   Transfer to Housing Court
 subquestion: |
-  You have the right to transfer your case to the Housing Court.
-  Most tenants benefit from transferring their case to the Housing Court.
-  Depending on your city or town, the Housing Court may be more difficult to get to.
-  You should come up with a plan to get to court on time.
+  You have the right to transfer your case to the Housing Court. Most tenants benefit from transferring their case to the Housing Court.
+  
+  Depending on your city or town, the Housing Court may be more difficult to get to. You should come up with a plan to get to court on time.
+  
   Check the [Housing Court For All](http://www.housingcourt4all.org/where-the-housing-court-sits.html) website
   to learn where the Housing Court sits for your city or town.
+  
   #### Why transfer your case to the Housing Court? 
   1. Access to legal aid and [Lawyer for the Day](https://www.mass.gov/service-details/lawyer-for-the-day-programs) programs.
   2. Access to the [Tenancy Preservation Program](https://www.mass.gov/info-details/tenancy-preservation-program).
   3. Access to social service agencies that may help you pay back rent.
   4. Judges who specialize in housing law.
+  
   Transferring your case may also postpone your first court hearing by a week or more, depending on your court.
   Transferring is an automatic right. You should check with the clerk in the Housing Court to find out
   where and what day you should appear in court. You may get a notice in the mail. It will most likely not be
@@ -165,18 +169,18 @@ subquestion: |
 fields:
   - Court name: court
     datatype: object
-    choices: macourts
----
-id: transfer court information
+    choices: transfer_courts
+--- 
+id: transfer court
 question: |
-  Which Housing Court would you like to transfer to?
+  Which Housing Court are you transferring your case to?
 subquestion: |
-  We have tried to fill in the name of the Housing Court that serves your address.
-fields:
-  - Court name: transfer_court_name
+  Check the [Housing Court For All](http://www.housingcourt4all.org/where-the-housing-court-sits.html) website
+  to learn where the court sits for your city or town.
+fields: 
+  - no label: transfer_court_name_temp
     datatype: object
-    default: local_housing_court
-    choices: macourts
+    choices: housing_courts
 ---
 code: |
   local_housing_court = macourts.matching_housing_court(tenants[0].address)
@@ -187,8 +191,11 @@ code: |
 code: |
   if not local_housing_court is None and local_housing_court != "":
     transfer_court_name = local_housing_court
+    transfer_court_address = local_housing_court.address
   else:
     transfer_court_name = transfer_court_name_temp # ask
+    transfer_court_address = local_housing_court.address
+
 ---
 id: preview TransferNotice
 question: |
@@ -197,11 +204,6 @@ subquestion: |
   Here is a preview of the form you will sign on the next page.   
   
   ${ al_court_bundle.as_pdf(key='preview') }
-
-  Click the image to open it in a new tab. Click the "Make changes" button
-  to edit your answers.
-
-  ${ action_button_html(url_action('review_TransferNotice'), label='Make changes', color='info') }
   
   Remember to come back to this window to continue and sign your form.
 continue button field: TransferNotice_preview_question    
