@@ -60,13 +60,9 @@ code: |
 ---
 objects:
   - users: ALPeopleList.using(there_are_any=True)
-  - tenants: ALPeopleList.using(there_are_any=True)
-  - landlords_attorneys: ALPeopleList
-  - landlords: ALPeopleList.using(there_are_any=True)
-  - court: MACourt
-  - housing_courts: MACourtList.using(courts=['housing_courts'])
-  - transfer_courts: MACourtList.using(courts=['bmc','district_courts'])
-  - macourts: MACourtList.using(courts=True)
+  - plaintiffs: ALPeopleList.using(there_are_any=True)
+  - attorney: ALIndividual
+  - defendants: ALPeopleList.using(there_are_any=True)
 ---
 sections:
   - review_TransferNotice: Review your answers
@@ -77,36 +73,16 @@ code: |
   allowed_courts = interview_metadata["TransferNotice"]["allowed courts"]
   nav.set_section('review_TransferNotice')
   user_ask_role = 'defendant'
-
-  users[0].name.first
-  users[0].address.address
-  users[0].phone_number
-  users.there_is_another=False
   
-  if user_is_tenant:
-    tenants[0] = users[0]
-    tenants.there_is_another=False
-
-  else:
-    tenants[0].name.first
-    tenants[0].address.address
-    tenants[0].phone_number
-    tenants.there_is_another=False
-
-  landlords[0].name.first
-  landlords[0].address.address
-  landlords.there_is_another=False
-
-  if landlords[0].has_attorney:
-    landlords_attorneys[0].name.first
-    landlords_attorneys[0].address.address
-    landlords_attorneys.there_is_another=False
-
-  other_parties.there_are_any = False
+  defendants.gather(complete_attribute = "defendants_gather_complete")
+  plaintiffs.gather(complete_attribute = "plaintiffs_gather_complete")
   
+  if plaintiff_has_attorney: 
+    attorney.name.first
+    attorney.address.address
+    
   court
-  
-  transfer_court_name
+  transfer_court
   
   interview_order_TransferNotice = True
 ---
@@ -118,84 +94,148 @@ code: |
   interview_order_TransferNotice
   signature_date
   # Save anonymized interview statistics (customize the saved data below)
-  store_variables_snapshot(data={'zip': tenants[0].address.zip})
+  store_variables_snapshot(data={'zip': defendants[0].address.zip})
   TransferNotice_preview_question
-  basic_questions_signature_flow
+  #basic_questions_signature_flow
   TransferNotice_download
+---
+id: first tenants name
+generic object: ALIndividual
+sets:
+  - defendants[0].name.first
+  - defendants[0].name.last
+question: |
+  Your name
+fields:
+  - code: |
+      defendants[0].name_fields()
+---
+id: first tenants address
+generic object: ALIndividual
+sets:
+  - defendants[0].address.address
+  - defendants[0].address.city
+question: |
+  Your address
+fields:
+  - code: |
+      defendants[0].address_fields()
+---
+id: your contact information
+generic object: ALIndividual
+question: |
+  What is your contact information?
+fields:  
+  - Other phone number: defendants[0].phone_number
+    required: False
+  - Email address: defendants[0].email    
+    datatype: email
+    required: False
+---
+id: everyone elses contact information
+generic object: ALIndividual
+question: |
+  What is ${ x }'s contact information?
+fields:  
+  - Other phone number: x.phone_number
+    required: False
+  - Email address: x.email    
+    datatype: email
+    required: False
+---
+id: name of landlords
+sets:
+  - plaintiffs[i].name.first
+  - plaintiffs[i].name.last
+  - plaintiffs[i].name.middle
+  - plaintiffs[i].name.suffix
+generic object: ALPeopleList
+question: |
+  Name of the ${ ordinal(i) } landlord
+fields:
+  - code: |
+      plaintiffs[i].name_fields()
+---
+generic object: ALPeopleList
+id: any other people
+question: |
+  Do you have any other landlords to tell us about?
+yesno: plaintiffs.there_is_another  
+---
+generic object: ALPeopleList
+id: any other tenants
+question: |
+  Are there any other tenants?
+yesno: defendants.there_is_another
 ---
 id: Transfer_to_Housing_Court
 continue button field: TransferNotice_intro
 question: |
-  Transfer to Housing Court
+  Transfer to the Housing Court
 subquestion: |
   You have the right to transfer your case to the Housing Court. Most tenants benefit from transferring their case to the Housing Court.
   
-  Depending on your city or town, the Housing Court may be more difficult to get to. You should come up with a plan to get to court on time.
-  
-  Check the [Housing Court For All](http://www.housingcourt4all.org/where-the-housing-court-sits.html) website
+  Depending on your city or town, the Housing Court may be more difficult to get to. You should come up with a plan to get to court on time. Check the [Housing Court For All](http://www.housingcourt4all.org/where-the-housing-court-sits.html) website
   to learn where the Housing Court sits for your city or town.
   
   #### Why transfer your case to the Housing Court? 
-  1. Access to legal aid and [Lawyer for the Day](https://www.mass.gov/service-details/lawyer-for-the-day-programs) programs.
-  2. Access to the [Tenancy Preservation Program](https://www.mass.gov/info-details/tenancy-preservation-program).
-  3. Access to social service agencies that may help you pay back rent.
-  4. Judges who specialize in housing law.
+  1. Legal aid and [Lawyer for the Day](https://www.mass.gov/service-details/lawyer-for-the-day-programs) programs
+  2. The [Tenancy Preservation Program](https://www.mass.gov/info-details/tenancy-preservation-program)
+  3. Social service agencies that may help you pay back rent
+  4. Judges who specialize in housing law
   
-  Transferring your case may also postpone your first court hearing by a week or more, depending on your court.
   Transferring is an automatic right. You should check with the clerk in the Housing Court to find out
   where and what day you should appear in court. You may get a notice in the mail. It will most likely not be
-  the rescheduled trial date that is printed on the Answer form.
+  the rescheduled trial date that is printed on the Answer form. Transferring your case may also postpone your first court hearing by a week or more, depending on your court.
 ---
-id: user tenant 
-question: |
-  Are you the tenant?
-fields:
-  - "no label": user_is_tenant
-    datatype: yesnoradio
+generic object: ALIndividual
+code: |
+  x.name.first
+  x.address.address
+  x.plaintiffs_gather_complete = True
+---
+generic object: ALIndividual
+code: |
+  x.name.first
+  x.address.address
+  x.email
+  x.defendants_gather_complete = True
 ---
 id: landloard has attorney
 question: |
-  Does ${ landlords[0] } have an attorney?
+  Does ${ plaintiffs } have an attorney?
 fields:
-  - "no label": landlords[0].has_attorney
+  - "no label": plaintiff_has_attorney
     datatype: yesnoradio
 ---
 id: court information
 question: |
-  What court is your case currently scheduled in?
+  Transfer to the Housing Court
 subquestion: |
+  **Select the court you are currently scheduled in and the Housing Court that you are transferring to.**
+  
   Look at the upper-right-hand corner of the Summons and Complaint form. Select the court name to match the information on your Summons and Complaint.
+  
   [FILE court_and_county.png, 100%]
-fields:
-  - Court name: court
-    datatype: object
-    choices: transfer_courts
---- 
-id: transfer court
-question: |
-  Which Housing Court are you transferring your case to?
-subquestion: |
+  
   Check the [Housing Court For All](http://www.housingcourt4all.org/where-the-housing-court-sits.html) website
-  to learn where the court sits for your city or town.
-fields: 
-  - no label: transfer_court_name_temp
+  to learn where the Housing Court sits for your city or town.
+  
+  We have tried to fill in the name of the Housing Court that serves your address.
+fields:
+  - Current court your case is scheduled in: court
     datatype: object
-    choices: housing_courts
----
+    choices: all_courts.filter_courts(['District Court', 'Boston Municipal Court'])
+  - Housing court you are transferring to: transfer_court 
+    datatype: object
+    default: local_housing_court
+    choices: all_courts.filter_courts(['Housing Court'])
+--- 
 code: |
-  local_housing_court = macourts.matching_housing_court(tenants[0].address)
+  local_housing_court = all_courts.matching_housing_court(defendants[0].address)
 ---
 code: |
   court_is_housing_court = "housing court" in court.name.lower()
----
-code: |
-  if not local_housing_court is None and local_housing_court != "":
-    transfer_court_name = local_housing_court
-    transfer_court_address = local_housing_court.address
-  else:
-    transfer_court_name = transfer_court_name_temp # ask
-    transfer_court_address = local_housing_court.address
-
 ---
 id: preview TransferNotice
 question: |
@@ -205,72 +245,74 @@ subquestion: |
   
   ${ al_court_bundle.as_pdf(key='preview') }
   
+
+  Click the image to open it in a new tab. Click the "Make changes" button
+  to edit your answers.
+
+  ${ action_button_html(url_action('review_TransferNotice'), label='Make changes', color='info') }
+  
   Remember to come back to this window to continue and sign your form.
 continue button field: TransferNotice_preview_question    
 ---
 code: |
-  signature_fields = ['tenants[0].signature']
+  signature_fields = [' ']
 ---
 id: TransferNotice review screen
 event: review_TransferNotice
 question: |
   Review your answers
 review:
-  - Edit: tenants.revisit
+  - Edit: defendants.revisit
     button: |
-      **Tenant**
+      **Tenant(s)**
 
-      % for item in tenants:
+      % for item in defendants:
         * ${ item }
       % endfor
-  - Edit: landlords.revisit
+  - Edit: plaintiffs.revisit
     button: |
-      **Landlord**
+      **Landlord(s)**
 
-      % for item in landlords:
+      % for item in plaintiffs:
         * ${ item }
       % endfor
-  - Edit: landlords_attorneys.revisit
+  - Edit: attorney
     button: |
-      **Landlords attorney**
-
-      % for item in landlords_attorneys:
-        * ${ item }
-      % endfor
+      **Landlord's Attorney**
+      
+      * ${ attorney.name }
+      * ${ attorney.address }
 ---
-continue button field: landlords.revisit
+continue button field: plaintiffs.revisit
 question: |
-  Edit landlords
+  Edit Landlords
 subquestion: |
-  ${ landlords.table }
+  ${ plaintiffs.table }
 
-  ${ landlords.add_action() }
+  ${ plaintiffs.add_action() }
 ---
-table: landlords.table
-rows: landlords
+table: plaintiffs.table
+rows: plaintiffs
 columns:
-  - Has attorney: |
-      row_item.has_attorney if defined("row_item.has_attorney") else ""
-  - Address: |
-      row_item.address.block() if defined("row_item.address.address") else ""
   - Name: |
       row_item.name.full() if defined("row_item.name.first") else ""
+  - Address: |
+      row_item.address.block() if defined("row_item.address.address") else ""
 edit:
-  - has_attorney
-  - address.address
   - name.first
+  - address.address
 confirm: True
 ---
-continue button field: tenants.revisit
+continue button field: defendants.revisit
 question: |
-  Edit tenants
+  Edit Tenants
 subquestion: |
-  ${ tenants.table }
+  ${ defendants.table }
 
-  ${ tenants.add_action() }
+  ${ defendants.add_action() }
 ---
-table: tenants.table
-rows: tenants
+table: defendants.table
+rows: defendants
 columns:
   - Name: |
       row_item.name.full() if defined("row_item.name.first") else ""
@@ -284,32 +326,12 @@ edit:
   - signature
 confirm: True
 ---
-continue button field: landlords_attorneys.revisit
-question: |
-  Edit landlords_attorneys
-subquestion: |
-  ${ landlords_attorneys.table }
-
-  ${ landlords_attorneys.add_action() }
----
-table: landlords_attorneys.table
-rows: landlords_attorneys
-columns:
-  - Address: |
-      row_item.address.block() if defined("row_item.address.address") else ""
-  - Name: |
-      row_item.name.full() if defined("row_item.name.first") else ""
-edit:
-  - address.address
-  - name.first
-confirm: True
----
 id: download TransferNotice
 event: TransferNotice_download
 question: |
   Your form is ready to download.
 subquestion: |
-  Thank you ${ users }. Your form is ready to download and deliver.
+  Thank you ${ defendants }. Your form is ready to download and deliver.
   
   View, download and send your form below. Click the "Make changes" button to fix any mistakes.
 
