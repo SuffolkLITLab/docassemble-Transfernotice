@@ -80,7 +80,8 @@ code: |
   if plaintiff_has_attorney: 
     attorney.name.first
     attorney.address.address
-    
+  
+  defendants[0].address.geocode()
   court
   transfer_court
   
@@ -218,19 +219,28 @@ subquestion: |
   
   [FILE court_and_county.png, 100%]
   
-  Check the [Housing Court For All](http://www.housingcourt4all.org/where-the-housing-court-sits.html) website
-  to learn where the Housing Court sits for your city or town.
-  
-  We have tried to fill in the name of the Housing Court that serves your address.
 fields:
+  - note: |
+      We have tried to fill in the name of your current court based on your address.
   - Current court your case is scheduled in: court
     datatype: object
-    choices: all_courts.filter_courts(['District Court', 'Boston Municipal Court'])
+    default: local_court
+    choices: all_courts.filter_courts(['District Court', 'Boston Municipal Court', 'Superior Court'])
+  - note: |
+      Check the [Housing Court For All](http://www.housingcourt4all.org/where-the-housing-court-sits.html) website to learn where the Housing Court sits for your city or town.
+      
+      We have tried to fill in the name of the Housing Court that serves your address.
   - Housing court you are transferring to: transfer_court 
     datatype: object
     default: local_housing_court
     choices: all_courts.filter_courts(['Housing Court'])
 --- 
+code: |
+  if defendants[0].address.city == "Boston": 
+    local_court = all_courts.matching_bmc(defendants[0].address)
+  else: 
+    local_court = all_courts.matching_district_court(defendants[0].address)
+---
 code: |
   local_housing_court = all_courts.matching_housing_court(defendants[0].address)
 ---
