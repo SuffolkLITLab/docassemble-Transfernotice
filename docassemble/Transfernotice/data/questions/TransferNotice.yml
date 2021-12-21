@@ -136,13 +136,26 @@ fields:
 id: everyone elses contact information
 generic object: ALIndividual
 question: |
-  What is ${ x }'s contact information?
+  What is the ${ ordinal(i) } tenant's contact information?
 fields:  
-  - Other phone number: x.phone_number
+  - Other phone number: defendants[i].phone_number
     required: False
-  - Email address: x.email    
+  - Email address: defendants[i].email    
     datatype: email
     required: False
+---
+id: name of landlords
+sets:
+  - defendants[i].name.first
+  - defendants[i].name.last
+  - defendants[i].name.middle
+  - defendants[i].name.suffix
+generic object: ALPeopleList
+question: |
+  Name of the ${ ordinal(i) } tenant
+fields:
+  - code: |
+      defendants[i].name_fields()
 ---
 id: name of landlords
 sets:
