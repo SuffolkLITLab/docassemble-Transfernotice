@@ -157,7 +157,7 @@ fields:
   - code: |
       defendants[i].name_fields()
 ---
-id: name of landlords
+id: "name of landlords 2"
 sets:
   - plaintiffs[i].name.first
   - plaintiffs[i].name.last
@@ -174,13 +174,17 @@ generic object: ALPeopleList
 id: any other people
 question: |
   Do you have any other landlords to tell us about?
-yesno: plaintiffs.there_is_another  
+fields:
+  - no label: plaintiffs.there_is_another
+    datatype: yesnoradio
 ---
 generic object: ALPeopleList
 id: any other tenants
 question: |
   Are there any other tenants?
-yesno: defendants.there_is_another
+fields:
+  - no label: defendants.there_is_another
+    datatype: yesnoradio
 ---
 id: Transfer_to_Housing_Court
 continue button field: TransferNotice_intro
@@ -307,6 +311,7 @@ review:
       * ${ attorney.address }
 ---
 continue button field: plaintiffs.revisit
+id: "edit landlords"
 question: |
   Edit Landlords
 subquestion: |
@@ -327,6 +332,7 @@ edit:
 confirm: True
 ---
 continue button field: defendants.revisit
+id: "edit tenants"
 question: |
   Edit Tenants
 subquestion: |
