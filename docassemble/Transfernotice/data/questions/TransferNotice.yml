@@ -193,7 +193,7 @@ question: |
 subquestion: |
   You have the right to transfer your case to the Housing Court. Most tenants benefit from transferring their case to the Housing Court.
   
-  Depending on your city or town, the Housing Court may be more difficult to get to. You should come up with a plan to get to court on time. Check the [Housing Court For All](http://www.housingcourt4all.org/where-the-housing-court-sits.html) website
+  Depending on your city or town, the Housing Court may be more difficult to get to. You should come up with a plan to get to court on time. Check the [Housing Court locations](https://www.mass.gov/orgs/housing-court/locations) website
   to learn where the Housing Court sits for your city or town.
   
   #### Why transfer your case to the Housing Court? 
@@ -234,7 +234,7 @@ subquestion: |
   
   Look at the upper-right-hand corner of the Summons and Complaint form. Select the court name to match the information on your Summons and Complaint.
   
-  [FILE court_and_county.png, 100%]
+  [FILE court_and_county.png, 100%, Court name and county in the upper-right corner of the Summons and Complaint]
   
 fields:
   - note: |
@@ -244,7 +244,7 @@ fields:
     default: local_court
     choices: all_courts.filter_courts(['District Court', 'Boston Municipal Court', 'Superior Court'])
   - note: |
-      Check the [Housing Court For All](http://www.housingcourt4all.org/where-the-housing-court-sits.html) website to learn where the Housing Court sits for your city or town.
+      Check the [Housing Court locations](https://www.mass.gov/orgs/housing-court/locations) website to learn where the Housing Court sits for your city or town.
       
       We have tried to fill in the name of the Housing Court that serves your address.
   - Housing court you are transferring to: transfer_court 
