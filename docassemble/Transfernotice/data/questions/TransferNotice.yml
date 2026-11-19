@@ -5,14 +5,41 @@ include:
   - docassemble.MassAccess:massaccess.yml
 ---
 metadata:
-  title: |
-    Transfer to Housing Court
-  short title: |
-    Transfer to Housing Court
-  tags:
-    - HO-00-00-00-00
+  title: Transfer your eviction case to Housing Court
+  short title: Transfer to Housing Court
+  description: >-
+    Move a Massachusetts eviction (summary process) case from District Court or Boston Municipal Court
+    to Housing Court. Fill out a Notice of Transfer and get instructions for filing it in both courts.
+  can_I_use_this_form: |
+    Use this form if you are a tenant in an eviction case in District Court or Boston Municipal Court.
+    Use it before your trial starts and before the court enters a judgment.
+  before_you_start: |
+    Have your Summons and Complaint. Find your docket number if you can.
+    Gather the names and addresses of your landlord or their lawyer and any other people named in the case.
+  when_you_are_finished: |
+    Print, sign, and date the notice. File it in both courts and give a copy to your landlord or their lawyer.
+    Do this by the day before trial.
   authors:
     - Mia Bonardi
+  jurisdiction: NAM-US-US+MA
+  languages:
+    - en
+  LIST_topics:
+    - HO-02-00-00-00
+    - CO-07-03-10-00
+  tags:
+    - HO-02-00-00-00
+    - CO-07-03-10-00
+  original_form: https://www.masslegalhelp.org/sites/default/files/2025-04/Booklet%205%20Transfer%202025.pdf
+  help_page_title: How to transfer an eviction case to Housing Court
+  help_page_url: https://www.masslegalhelp.org/housing-apartments-shelter/eviction/how-transfer-your-case-housing-court
+  form_titles:
+    - Notice of Transfer to Housing Court
+  form_numbers: []
+  allowed_courts:
+    - Boston Municipal Court
+    - District Court
+  typical_role: defendant
 ---
 code: |
   interview_metadata
@@ -23,15 +50,14 @@ code: |
       "al_weaver_version": "1.4.5",
       "generated on": "2021-12-17",
       "title": package_title,
-      "short title": package_title,
-      "original_form": "https://www.masslegalhelp.org/sites/default/files/2025-04/Booklet%205%20Transfer%202025.pdf",
+      "short title": all_variables(special="metadata").get("short title", package_title),
+      "description": all_variables(special="metadata").get("description", ""),
+      "original_form": all_variables(special="metadata").get("original_form", ""),
       "allowed courts": [
         "Boston Municipal Court",
         "District Court",
       ],
-      "categories": [
-        "HO-00-00-00-00",
-      ],        
+      "categories": all_variables(special="metadata").get("LIST_topics", []),
       "logic block variable": "interview_order_TransferNotice",
       "attachment block variable": "TransferNotice_attachment",
       "typical role": "defendant",
