@@ -52,7 +52,7 @@ setup(name='docassemble.Transfernotice',
       license='The MIT License',
       url='https://courtformsonline.org',
       packages=find_namespace_packages(),
-      install_requires=['docassemble.ALMassachusetts>=0.0.7', 'docassemble.AssemblyLine>=2.7.1', 'docassemble.MassAccess>=0.2.0'],
+      install_requires=['docassemble.ALMassachusetts>=0.0.7', 'docassemble.AssemblyLine>=2.7.1', 'docassemble.MassAccess>=0.2.0', 'docassemble.LITLabTheme'],
       zip_safe=False,
       package_data=find_package_data(where='docassemble/Transfernotice/', package='docassemble.Transfernotice'),
      )

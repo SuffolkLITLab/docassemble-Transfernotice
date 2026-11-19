@@ -3,6 +3,7 @@ include:
   - docassemble.AssemblyLine:al_package.yml
   - docassemble.ALMassachusetts:al_massachusetts.yml
   - docassemble.MassAccess:massaccess.yml
+  - docassemble.LITLabTheme:main.yml
 ---
 metadata:
   title: Transfer your eviction case to Housing Court
