@@ -14,18 +14,17 @@ metadata:
   authors:
     - Mia Bonardi
 ---
-mandatory: True
 code: |
   interview_metadata
-  if not defined("interview_metadata['TransferNotice']"):
+  package_title
+  if "allowed courts" not in interview_metadata.get("TransferNotice", {}):
     interview_metadata.initializeObject("TransferNotice")
     interview_metadata["TransferNotice"].update({
       "al_weaver_version": "1.4.5",
       "generated on": "2021-12-17",
-      "title": "Transfer to Housing Court",
-      "short title": "Transfer to Housing Court",
-      "description": "Transfer to Housing Court",
-      "original_form": "https://www.masslegalhelp.org/housing/lt1-booklet-5-transfer.pdf",
+      "title": package_title,
+      "short title": package_title,
+      "original_form": "https://www.masslegalhelp.org/sites/default/files/2025-04/Booklet%205%20Transfer%202025.pdf",
       "allowed courts": [
         "Boston Municipal Court",
         "District Court",
@@ -37,9 +36,10 @@ code: |
       "attachment block variable": "TransferNotice_attachment",
       "typical role": "defendant",
     })
+  transfer_metadata_ready = True
 ---
 code: |
-  interview_metadata['main_interview_key'] =  'TransferNotice'
+  interview_metadata['main_interview_key'] = 'TransferNotice'
 ---
 code: |
   # This controls the default country and list of states in address field questions
@@ -51,18 +51,16 @@ code: |
 ---
 code: |
   github_repo_name =  'docassemble-Transfernotice'
----
-code: |
-  interview_short_title = "Transfer to Housing Court"
+
 ---
 code: |
   al_form_type = 'existing_case'
 ---
 objects:
   - users: ALPeopleList.using(there_are_any=True)
-  - plaintiffs: ALPeopleList.using(there_are_any=True)
-  - attorney: ALIndividual
-  - defendants: ALPeopleList.using(there_are_any=True)
+  - plaintiffs: ALPeopleList.using(there_are_any=True, minimum_number=1)
+  - defendants: ALPeopleList.using(there_are_any=True, minimum_number=1)
+  - plaintiffs[i].transfer_attorney: ALIndividual
 ---
 sections:
   - review_TransferNotice: Review your answers
@@ -74,14 +72,13 @@ code: |
   nav.set_section('review_TransferNotice')
   user_ask_role = 'defendant'
   
-  defendants.gather(complete_attribute = "defendants_gather_complete")
-  plaintiffs.gather(complete_attribute = "plaintiffs_gather_complete")
-  
-  if plaintiff_has_attorney: 
-    attorney.name.first
-    attorney.address.address
-  
-  defendants[0].address.geocode()
+  if not eligible_for_transfer:
+    transfer_not_supported
+
+  docket_number
+  defendants.gather(complete_attribute="defendants_gather_complete")
+  plaintiffs.gather(complete_attribute="plaintiffs_gather_complete")
+
   court
   transfer_court
   
@@ -90,14 +87,12 @@ code: |
 ###################### Main order ######################
 mandatory: True
 code: |
+  transfer_metadata_ready
   al_intro_screen
   TransferNotice_intro
   interview_order_TransferNotice
-  signature_date
   # Save anonymized interview statistics (customize the saved data below)
   store_variables_snapshot(data={'zip': defendants[0].address.zip})
-  TransferNotice_preview_question
-  #basic_questions_signature_flow
   TransferNotice_download
 ---
 id: first tenants name
@@ -127,7 +122,8 @@ generic object: ALIndividual
 question: |
   What is your contact information?
 fields:  
-  - Other phone number: defendants[0].phone_number
+  - Phone number: defendants[0].phone_number
+    datatype: al_phone
     required: False
   - Email address: defendants[0].email    
     datatype: email
@@ -138,7 +134,8 @@ generic object: ALIndividual
 question: |
   What is the ${ ordinal(i) } tenant's contact information?
 fields:  
-  - Other phone number: defendants[i].phone_number
+  - Phone number: defendants[i].phone_number
+    datatype: al_phone
     required: False
   - Email address: defendants[i].email    
     datatype: email
@@ -191,25 +188,61 @@ continue button field: TransferNotice_intro
 question: |
   Transfer to the Housing Court
 subquestion: |
-  You have the right to transfer your case to the Housing Court. Most tenants benefit from transferring their case to the Housing Court.
-  
-  Depending on your city or town, the Housing Court may be more difficult to get to. You should come up with a plan to get to court on time. Check the [Housing Court locations](https://www.mass.gov/orgs/housing-court/locations) website
-  to learn where the Housing Court sits for your city or town.
-  
-  #### Why transfer your case to the Housing Court? 
-  1. Legal aid and [Lawyer for the Day](https://www.mass.gov/service-details/lawyer-for-the-day-programs) programs
-  2. The [Tenancy Preservation Program](https://www.mass.gov/info-details/tenancy-preservation-program)
-  3. Social service agencies that may help you pay back rent
-  4. Judges who specialize in housing law
-  
-  Transferring is an automatic right. You should check with the clerk in the Housing Court to find out
-  where and what day you should appear in court. You may get a notice in the mail. It will most likely not be
-  the rescheduled trial date that is printed on the Answer form. Transferring your case may also postpone your first court hearing by a week or more, depending on your court.
+  Use this interview to move an eviction case from District Court or Boston Municipal Court to Housing Court.
+  You do not need a hearing to ask to move your case.
+  File in both courts and give the other parties copies by the day before trial.
+  If trial is today, ask the clerk or a lawyer about your options right away.
+
+  Housing Court judges specialize in housing law. Some Housing Courts offer programs such as
+  [Lawyer for the Day](https://www.mass.gov/service-details/lawyer-for-the-day-programs)
+  and the [Tenancy Preservation Program](https://www.mass.gov/info-details/tenancy-preservation-program).
+
+  Have your Summons and Complaint ready. Copy the names exactly as they appear there.
+  Read [Massachusetts Legal Help’s transfer guide](https://www.masslegalhelp.org/housing-apartments-shelter/eviction/how-transfer-your-case-housing-court) for the filing steps.
+---
+id: check transfer eligibility
+question: |
+  Is this a pending eviction case you can move to Housing Court?
+subquestion: |
+  Use this form if all of these statements are true:
+
+  * Your eviction case was filed in District Court or Boston Municipal Court.
+  * Your trial has not started and no judgment has been entered.
+fields:
+  - Do all of these statements apply to you?: eligible_for_transfer
+    datatype: yesnoradio
+---
+id: transfer not supported
+event: transfer_not_supported
+question: |
+  This interview may not fit your case
+subquestion: |
+  Read [Massachusetts Legal Help’s transfer guide](https://www.masslegalhelp.org/housing-apartments-shelter/eviction/how-transfer-your-case-housing-court)
+  or ask a lawyer about your options. If you selected the wrong answer, go back to change it.
+buttons:
+  - Exit: exit
+---
+id: transfer docket number
+question: |
+  What is your case’s docket number?
+subquestion: |
+  Look near the top right of your Summons and Complaint. If you do not know the number,
+  ask the court clerk. You can also add it to the printed notice.
+fields:
+  - Docket number: docket_number
+    required: False
 ---
 generic object: ALIndividual
 code: |
   x.name.first
-  x.address.address
+  x.has_transfer_attorney
+  if x.has_transfer_attorney:
+    x.transfer_attorney.name.first
+    x.transfer_attorney.address.address
+    x.transfer_attorney.phone_number
+  else:
+    x.address.address
+    x.phone_number
   x.plaintiffs_gather_complete = True
 ---
 generic object: ALIndividual
@@ -219,35 +252,64 @@ code: |
   x.email
   x.defendants_gather_complete = True
 ---
-id: landloard has attorney
+id: landlord has attorney
 question: |
-  Does ${ plaintiffs } have an attorney?
+  Does ${ plaintiffs[i] } have a lawyer in this case?
 fields:
-  - "no label": plaintiff_has_attorney
+  - no label: plaintiffs[i].has_transfer_attorney
     datatype: yesnoradio
+
+---
+id: transfer attorney name
+question: |
+  What is ${ plaintiffs[i] }’s lawyer’s name?
+fields:
+  - code: |
+      plaintiffs[i].transfer_attorney.name_fields()
+---
+id: transfer attorney address
+question: |
+  What is ${ plaintiffs[i].transfer_attorney }’s mailing address?
+fields:
+  - code: |
+      plaintiffs[i].transfer_attorney.address_fields()
+---
+id: transfer attorney phone
+question: |
+  What is ${ plaintiffs[i].transfer_attorney }’s phone number?
+fields:
+  - Phone number: plaintiffs[i].transfer_attorney.phone_number
+    datatype: al_phone
+    required: False
+---
+id: transfer landlord phone
+question: |
+  What is ${ plaintiffs[i] }’s phone number?
+fields:
+  - Phone number: plaintiffs[i].phone_number
+    datatype: al_phone
+    required: False
 ---
 id: court information
 question: |
-  Transfer to the Housing Court
+  Which courts will get the notice?
 subquestion: |
-  **Select the court you are currently scheduled in and the Housing Court that you are transferring to.**
-  
-  Look at the upper-right-hand corner of the Summons and Complaint form. Select the court name to match the information on your Summons and Complaint.
-  
+  Copy your current court’s name from the Summons and Complaint.
+  Check [Housing Court locations](https://www.mass.gov/orgs/housing-court/locations) for the court that serves your city or town.
+
   [FILE court_and_county.png, 100%, Court name and county in the upper-right corner of the Summons and Complaint]
-  
 fields:
   - note: |
       We have tried to fill in the name of your current court based on your address.
-  - Current court your case is scheduled in: court
+  - Court where your case was filed: court
     datatype: object
     default: local_court
-    choices: all_courts.filter_courts(['District Court', 'Boston Municipal Court', 'Superior Court'])
+    choices: all_courts.filter_courts(allowed_courts)
   - note: |
       Check the [Housing Court locations](https://www.mass.gov/orgs/housing-court/locations) website to learn where the Housing Court sits for your city or town.
       
       We have tried to fill in the name of the Housing Court that serves your address.
-  - Housing court you are transferring to: transfer_court 
+  - Housing Court for your city or town: transfer_court
     datatype: object
     default: local_housing_court
     choices: all_courts.filter_courts(['Housing Court'])
@@ -260,29 +322,6 @@ code: |
 ---
 code: |
   local_housing_court = all_courts.matching_housing_court(defendants[0].address)
----
-code: |
-  court_is_housing_court = "housing court" in court.name.lower()
----
-id: preview TransferNotice
-question: |
-  Preview your form before you sign it
-subquestion: |
-  Here is a preview of the form you will sign on the next page.   
-  
-  ${ al_court_bundle.as_pdf(key='preview') }
-  
-
-  Click the image to open it in a new tab. Click the "Make changes" button
-  to edit your answers.
-
-  ${ action_button_html(url_action('review_TransferNotice'), label='Make changes', color='info') }
-  
-  Remember to come back to this window to continue and sign your form.
-continue button field: TransferNotice_preview_question    
----
-code: |
-  signature_fields = [' ']
 ---
 id: TransferNotice review screen
 event: review_TransferNotice
@@ -303,12 +342,19 @@ review:
       % for item in plaintiffs:
         * ${ item }
       % endfor
-  - Edit: attorney
+  - note: |
+      % for landlord in plaintiffs:
+      **Copy for ${ landlord }**: ${ landlord.transfer_attorney if landlord.has_transfer_attorney else landlord }
+      % endfor
+  - Edit: docket_number
     button: |
-      **Landlord's Attorney**
-      
-      * ${ attorney.name }
-      * ${ attorney.address }
+      **Docket number**: ${ docket_number or "Not entered" }
+  - Edit: court
+    button: |
+      **Original court**: ${ court }
+  - Edit: transfer_court
+    button: |
+      **Housing Court**: ${ transfer_court }
 ---
 continue button field: plaintiffs.revisit
 id: "edit landlords"
@@ -317,18 +363,28 @@ question: |
 subquestion: |
   ${ plaintiffs.table }
 
+  % for landlord in plaintiffs:
+  <%
+  recipient = landlord.transfer_attorney if landlord.has_transfer_attorney else landlord
+  %>
+  **${ recipient.name }**
+  ${ recipient.address.on_one_line() }
+  ${ recipient.phone_number or "" }
+
+  ${ action_button_html(url_ask([recipient.instanceName + ".name.first", recipient.instanceName + ".address.address", recipient.instanceName + ".phone_number"]), label="Edit contact for " + str(recipient.name), color="link") }
+  % endfor
+
   ${ plaintiffs.add_action() }
 ---
 table: plaintiffs.table
 rows: plaintiffs
 columns:
-  - Name: |
-      row_item.name.full() if defined("row_item.name.first") else ""
-  - Address: |
-      row_item.address.block() if defined("row_item.address.address") else ""
+  - Landlord: row_item.name.full()
+  - "Who gets a copy": |
+      row_item.transfer_attorney if row_item.has_transfer_attorney else row_item
 edit:
   - name.first
-  - address.address
+  - has_transfer_attorney
 confirm: True
 ---
 continue button field: defendants.revisit
@@ -347,12 +403,11 @@ columns:
       row_item.name.full() if defined("row_item.name.first") else ""
   - Address: |
       row_item.address.block() if defined("row_item.address.address") else ""
-  - Signature: |
-      row_item.signature if defined("row_item.signature") else ""
 edit:
   - name.first
   - address.address
-  - signature
+  - phone_number
+  - email
 confirm: True
 ---
 id: download TransferNotice
@@ -360,9 +415,8 @@ event: TransferNotice_download
 question: |
   Your form is ready to download.
 subquestion: |
-  Thank you ${ defendants }. Your form is ready to download and deliver.
-  
-  View, download and send your form below. Click the "Make changes" button to fix any mistakes.
+  Review the notice. Then print it, sign and date it, and follow the separate filing instructions.
+  Click "Make changes" to fix any mistakes.
 
   ${ action_button_html(url_action('review_TransferNotice'), label='Make changes', color='info') }
   
@@ -386,8 +440,10 @@ attachments:
   - name: TransferNotice post interview instructions
     filename: Post-interview-instructions     
     variable name: TransferNotice_post_interview_instructions[i]        
+    tagged pdf: True
     docx template file: TransferNotice_next_steps.docx
   - name: TransferNotice attachment
     filename: TransferNotice     
     variable name: TransferNotice_attachment[i]        
+    tagged pdf: True
     docx template file: TransferNotice.docx
