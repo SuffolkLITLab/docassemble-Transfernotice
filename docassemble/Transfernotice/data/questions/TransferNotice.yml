@@ -261,6 +261,9 @@ fields:
 
 ---
 id: transfer attorney name
+sets:
+  - plaintiffs[i].transfer_attorney.name.first
+  - plaintiffs[i].transfer_attorney.name.last
 question: |
   What is ${ plaintiffs[i] }’s lawyer’s name?
 fields:
@@ -268,6 +271,9 @@ fields:
       plaintiffs[i].transfer_attorney.name_fields()
 ---
 id: transfer attorney address
+sets:
+  - plaintiffs[i].transfer_attorney.address.address
+  - plaintiffs[i].transfer_attorney.address.city
 question: |
   What is ${ plaintiffs[i].transfer_attorney }’s mailing address?
 fields:
